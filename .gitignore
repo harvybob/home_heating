@@ -1,0 +1,4 @@
+*.errors
+*pyc
+*log
+config_heating.ini
