@@ -168,7 +168,7 @@ def switch_heating():
 def main():
     while True:
         check_heating()
-        switch_heating()
+       # switch_heating()
         signal.signal(signal.SIGINT, handle_ctrl_c)    
 if __name__ == "__main__":
     main()
