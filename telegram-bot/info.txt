@@ -1,0 +1,4 @@
+installed pip install python-telegram-bot
+
+git repo is:
+https://github.com/python-telegram-bot/python-telegram-bot
