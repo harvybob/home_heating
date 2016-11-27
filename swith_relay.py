@@ -1,3 +1,4 @@
+import sys
 import i2c_raw
 bv4627 = i2c_raw.i2c(0x32, 1) # device 0x32, bus 1
 import MySQLdb as mdb

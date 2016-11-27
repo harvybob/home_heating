@@ -6,6 +6,7 @@
 #3rd Feb - tidy up and add debug
 #4th Feb - Comments for help
 #29th Nov - Split to check what sensors are on this pi and if they are current then update.
+#29th nov 2016 removed os.system('modprobe w1-gpio and w1-therm') as they were throwing errors, but doesnt seem to be used.
 
 
 import time
@@ -14,12 +15,13 @@ import fnmatch
 import MySQLdb as mdb
 import ConfigParser
 import logging
-logging.basicConfig(filename='/home/pi/heating/heating_log/DS18B20_error.log', level=logging.INFO,
+logging.basicConfig(filename='/home/pi/heating/heating_log/DS18B20_error.log', level=logging.DEBUG,
                     format='%(asctime)s %(levelname)s %(name)s %(message)s')
 logger=logging.getLogger(__name__)
 
-os.system('modprobe w1-gpio')
-os.system('modprobe w1-therm')
+
+#os.system('modprobe w1-gpio')
+#os.system('modprobe w1-therm')
 
 Main_sensor_list = []
 
@@ -136,14 +138,17 @@ def update_value(sensor):
     """Will insert the current temprature of a sensor into database table"""
     logging.debug("Insert sensor details into temp_log " + str(sensor))
     values_to_insert= get_reading(sensor)
+    
     if (values_to_insert[3] < 7):
         logging.INFO( "value too low for sensor: " + str(values_to_insert[0]) + ". value read is: " + str(values_to_insert[3]))
         values_to_insert= get_reading(sensor)
     # returns in format of sensor, date, time, value
+    
     insert_sql("INSERT INTO temp_log(sensor_id, date, time, value) \
         VALUES ('%s', '%s', '%s', '%s' );" % \
         (values_to_insert[0],values_to_insert[1],values_to_insert[2],values_to_insert[3]))
     logging.debug("Insert sensor details into current" + str(sensor))
+    
     insert_sql("INSERT INTO current (sensor, target, last_reading, date, time) \
         VALUES ('%s', 20, '%s', '%s', '%s' ) \
         on duplicate key update last_reading='%s', date='%s', time='%s' " % \
@@ -155,7 +160,9 @@ def main():
     #clear_sensors()
     Main_sensor_list=get_current_sensors()
     
-    for i in range(0,len(Main_sensor_list)): 
+    for i in range(0,len(Main_sensor_list)):
+        logging.debug("checking sensor: " + str(Main_sensor_list[i])) 
+        
         update_value(Main_sensor_list[i])
                         
 if __name__ == "__main__":

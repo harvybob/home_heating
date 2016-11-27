@@ -1,0 +1,37 @@
+UserIO
+display:
+Test display with new min/max
+WEB:
+setup web page on pi, add room images and navi. remi
+TELEGRAM:
+telegrapm bot:
+  setup interation , select room, return current temp+ target, request new temp
+
+
+main heating:
+update heating to pull relay switching out - heating puts sensors in table, relay moves to on off
+adjust to account for min/max
+add overrun? floor will continue to heat while off!
+
+Get readings:
+add table for non room heating - sensors for floor, pipes etc
+
+
+FailSafe:
+new table for too hot floor
+new script to move sensor to too hot table if floor temp is too hot
+relay to turn off boiler if all going wrong
+hardware + script to check which relays are on - see examples for push switch
+
+
+Scheduling:
+adjust schedule script to move main swap to own method.
+  then if not in holiday mode do swaps
+  if party mode, if sensor is in list, then skip.
+
+
+Relays:
+Adjust to check if sensor is on/off at present
+test script runs
+
+
