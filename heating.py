@@ -1,8 +1,11 @@
 # Done:
 # Heating switches based on temprature
 # finds relay number for each sensor and switches
+# Removed weezy relay switching - 29 nov 2016
+# Changed target to max/min - 29 nov 2016
 #
 # TODO:
+# Add max and min to current, and adjust view_current_on and view_current_off to include max_target, min_target
 # record state of main relay or read this back from resistance?
 
 
@@ -100,18 +103,6 @@ def move_sensor(move_sensor,table_from,table_to):
                      
     
     
-                     
-                        
-def switch_relay_weezy(sensor):
-    """Will look up relay number for a sensor and switch it"""
-    relay_results=select_sql("SELECT relay FROM sensor_master WHERE sensors = '{0}'".format(sensor))
-    for relay in relay_results:
-        relay_no=int(relay[0])
-        logging.info("switching on relay "+str(relay_no))
-        bus.i2c(0x32,[relay_no,1,0,1],0)
-        time.sleep(.4)
-        logging.info("switching off relay "+str(relay_no))
-        bus.i2c(0x32,[relay_no,0,0,1],0)
 
 
 def switch_relay(sensor):
@@ -131,13 +122,13 @@ def switch_relay(sensor):
 def check_heating():
     """Gets a list of currnt sensors from view_current_off/on and moves them to the need_heating or hot_enough tables"""
     logging.debug("Get list of current sensors from view_current_off which are cold")      
-    current_sensor_list=select_sql("select sensor from view_current_off where target > last_reading")
+    current_sensor_list=select_sql("select sensor from view_current_off where min_target > last_reading")
     for i in range(0,len(current_sensor_list)):
             for sensor in current_sensor_list[i]:
                 move_sensor(sensor,"heating_off","need_heat")
 
     logging.debug("Get list of current sensors from view_current_on which are hot")      
-    current_sensor_list=select_sql("select sensor from view_current_on where target < last_reading")
+    current_sensor_list=select_sql("select sensor from view_current_on where max_target < last_reading")
     
     for i in range(0,len(current_sensor_list)):
             for sensor in current_sensor_list[i]:
