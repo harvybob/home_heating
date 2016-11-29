@@ -6,6 +6,27 @@
 # This program is dedicated to the public domain under the CC0 license.
 import logging
 import telegram
+
+import ConfigParser
+Config = ConfigParser.ConfigParser()
+Config.read("./config_telegram.ini")
+Config.sections()
+
+def ConfigSectionMap(section):
+    dict1 = {}
+    options = Config.options(section)
+    for option in options:
+        try:
+            dict1[option] = Config.get(section, option)
+            if dict1[option] == -1:
+                DebugPrint("skip: %s" % option)
+        except:
+            print("exception on %s!" % option)
+            dict1[option] = None
+    return dict1
+
+telegram_token = ConfigSectionMap("SectionOne")['token']
+
 from telegram.error import NetworkError, Unauthorized
 from time import sleep
 
@@ -15,7 +36,7 @@ update_id = None
 def main():
     global update_id
     # Telegram Bot Authorization Token
-    bot = telegram.Bot('TOKEN')
+    bot = telegram.Bot(telegram_token)
 
     # get the first pending update_id, this is so we can skip over it in case
     # we get an "Unauthorized" exception.

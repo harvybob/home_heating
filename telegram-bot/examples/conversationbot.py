@@ -17,6 +17,27 @@ Press Ctrl-C on the command line or send a signal to the process to stop the
 bot.
 """
 
+
+import ConfigParser
+Config = ConfigParser.ConfigParser()
+Config.read("./config_telegram.ini")
+Config.sections()
+
+def ConfigSectionMap(section):
+    dict1 = {}
+    options = Config.options(section)
+    for option in options:
+        try:
+            dict1[option] = Config.get(section, option)
+            if dict1[option] == -1:
+                DebugPrint("skip: %s" % option)
+        except:
+            print("exception on %s!" % option)
+            dict1[option] = None
+    return dict1
+
+telegram_token = ConfigSectionMap("SectionOne")['token']
+
 from telegram import (ReplyKeyboardMarkup, ReplyKeyboardHide)
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, RegexHandler,
                           ConversationHandler)
@@ -117,7 +138,7 @@ def error(bot, update, error):
 
 def main():
     # Create the EventHandler and pass it your bot's token.
-    updater = Updater("TOKEN")
+    updater = Updater(telegram_token)
 
     # Get the dispatcher to register handlers
     dp = updater.dispatcher
