@@ -3,10 +3,10 @@
 # finds relay number for each sensor and switches
 # Removed weezy relay switching - 29 nov 2016
 # Changed target to max/min - 29 nov 2016
-#
+# # Add max and min to current, and adjust view_current_on and view_current_off to include max_target, min_target
 # TODO:
-# Add max and min to current, and adjust view_current_on and view_current_off to include max_target, min_target
-# record state of main relay or read this back from resistance?
+# remove relay code
+# record state of main relay or read this back from resistance - sepearte code.
 
 
 import sys
@@ -19,7 +19,7 @@ bv4627 = i2c_raw.i2c(0x32, 1) # device 0x32, bus 1
 import MySQLdb as mdb
 import ConfigParser
 import logging
-logging.basicConfig(filename='./heating_log/error_heating.log', level=logging.INFO,
+logging.basicConfig(filename='./heating_log/error_heating.log', level=logging.DEBUG,
                     format='%(asctime)s %(levelname)s %(name)s %(message)s')
 logger=logging.getLogger(__name__)
 
@@ -157,9 +157,9 @@ def switch_heating():
 
                 
 def main():
-    while True:
-        check_heating()
+    #while True:
+    check_heating()
        # switch_heating()
-        signal.signal(signal.SIGINT, handle_ctrl_c)    
+        #signal.signal(signal.SIGINT, handle_ctrl_c)    
 if __name__ == "__main__":
     main()

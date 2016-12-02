@@ -1,7 +1,9 @@
 import sys
+import signal
 import i2c_raw
 bv4627 = i2c_raw.i2c(0x32, 1) # device 0x32, bus 1
 import MySQLdb as mdb
+import time
 import ConfigParser
 import logging
 logging.basicConfig(filename='./heating_log/error_heating.log', level=logging.INFO,
@@ -75,7 +77,15 @@ def insert_sql(command):
     except mdb.Error, e:
       logger.error(e)
 
+def move_sensor(move_sensor,table_from,table_to):
+    """Will move sensor value from one table to another"""
+    logging.debug("move "+move_sensor+" from table "+table_from+" to "+table_to)
 
+    insert_sql("INSERT INTO "+table_to+" (sensor) \
+        VALUES ('%s')" % \
+        (move_sensor))
+    insert_sql("DELETE FROM "+table_from+" WHERE sensor = '"+move_sensor+"'")
+                     
 
 
 def switch_relay(sensor):
