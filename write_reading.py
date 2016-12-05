@@ -7,7 +7,7 @@
 #4th Feb - Comments for help
 #29th Nov - Split to check what sensors are on this pi and if they are current then update.
 #29th nov 2016 removed os.system('modprobe w1-gpio and w1-therm') as they were throwing errors, but doesnt seem to be used.
-
+#1st dec 2016 - CHECK FOR NULL min/max
 
 import time
 import os

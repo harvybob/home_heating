@@ -2,3 +2,5 @@
 *pyc
 *log
 config_heating.ini
+config_telegram.ini
+orig_*.py
