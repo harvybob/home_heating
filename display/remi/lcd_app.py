@@ -1,44 +1,65 @@
+# Version 1.0 most working, need to find why pics not loading,
+# and also set pic to load based on current_room variable.
+# need to also check buttons work as currently not loading completley.
 import remi.gui as gui
 from remi.gui import to_pix
 from remi import start, App
 from threading import Timer
-
-import sys
-import os
-import glob
-import time
-import MySQLdb as mdb
-import math
-import time
 import decimal
+import ConfigParser
 import logging
-logging.basicConfig(filename='../../heating_log/error_remi.log', level=logging.DEBUG,
+import MySQLdb as mdb
+
+
+logging.basicConfig(filename='../../heating_log/error_remi.log', level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(name)s %(message)s')
 logger=logging.getLogger(__name__)
+
+Config = ConfigParser.ConfigParser()
+Config.read("../../config_heating.ini")
+Config.sections()
+
+
+def ConfigSectionMap(section):
+    dict1 = {}
+    options = Config.options(section)
+    for option in options:
+        try:
+            dict1[option] = Config.get(section, option)
+            if dict1[option] == -1:
+                DebugPrint("skip: %s" % option)
+        except:
+            print("exception on %s!" % option)
+            dict1[option] = None
+    return dict1
+
+serverip = ConfigSectionMap("SectionOne")['ip']
+username = ConfigSectionMap("SectionOne")['name']
+userpass = ConfigSectionMap("SectionOne")['pass']
+schema = ConfigSectionMap("SectionOne")['schema']
+
 
 CURRENT = 0
 sensor_list=[]
 G_current_room=""
-G_current_temp="" 
+G_current_temp= 0.000 
 G_target_temp= 0.000
-G_current_temp=""
-G_display_temp=""
+G_target_max= 0.000
+G_target_min= 0.000
+G_display_temp= 0.000
+
 
 def select_sql(command):
     """Will execute a select command onto the pi schema on 192.168.1.100 and return the value"""
     logging.debug("Running Select sql "+str(command))
     try:
 ## host, userid, password, database instance
-      con = mdb.connect('192.168.1.100', 'pi', 'rpi', 'pi');
-      #con = mdb.connect('192.168.2.2', 'pi', 'rpi', 'pi');
+      con = mdb.connect(serverip, username, userpass, schema);
       cursor = con.cursor()
-        
       sql = command
       cursor.execute(sql)
       return cursor.fetchall()
-           
       con.close()
-
     except mdb.Error, e:
       logger.error(e)
       
@@ -47,20 +68,16 @@ def insert_sql(command):
     logging.debug("Running insert sql "+str(command))
     try:
 ## host, userid, password, database instance
-      con = mdb.connect('192.168.1.100', 'pi', 'rpi', 'pi');
-      #con = mdb.connect('192.168.2.2', 'pi', 'rpi', 'pi');
+      con = mdb.connect(serverip, username, userpass, schema);
       cursor = con.cursor()
-        
       sql = command
       cursor.execute(sql)
       sql = " commit;"
       cursor.execute(sql)
-           
       con.close()
-
     except mdb.Error, e:
       logger.error(e)
-      
+
 def get_current_sensors():
     return select_sql("select sensors from sensor_master where current = 1")
     
@@ -69,23 +86,28 @@ def get_room_details():
     global G_current_room 
     global G_current_temp 
     global G_target_temp
+    global G_target_min
+    global G_target_max
     global sensor_list
-    current_room_temp= select_sql("SELECT room,last_reading,target FROM view_display WHERE sensor = '{0}'".format(sensor_list[CURRENT][0]))
+    current_room_temp= select_sql("SELECT room,last_reading,target,max_target,min_target FROM view_display WHERE sensor = '{0}'".format(sensor_list[CURRENT][0]))
     G_current_room= current_room_temp[0][0]
     G_current_temp= current_room_temp[0][1]
     G_target_temp = current_room_temp[0][2]
-      
-      
+    G_target_max  = current_room_temp[0][3]
+    G_target_min  = current_room_temp[0][4]
 
 class LCDApp(App):
     def __init__(self, *args):
         super(LCDApp, self).__init__(*args, static_paths=('./res/',))
 
     def main(self):
+        global G_current_room 
+        global G_current_temp
+        global G_target_temp
         mainContainerWidth = 400 #will use this later to arrange buttons position
         self.mainContainer = gui.VBox(width=mainContainerWidth, height=600)
         
-        self.imageRoom = gui.Image('./room_images/room.png', height=300)
+        self.imageRoom = gui.Image('./res/bathroom.jpg', height=300)
         #suggestion: in order to change the displayed image you can do 
         #self.imageRoom.attributes['src'] = './res/new_image.png'
         self.mainContainer.append(self.imageRoom)
@@ -98,13 +120,13 @@ class LCDApp(App):
         w=75
         h=25
         lblRoomName = gui.Label('Room:', width=w, height=h)
-        self.lblRoomNameValue = gui.Label('living', width=w, height=h)
+        self.lblRoomNameValue = gui.Label(G_current_room, width=w, height=h)
         
         lblCurrentTemperature = gui.Label('Current:', width=w, height=h)
-        self.lblCurrentTemperatureValue = gui.Label('21 C', width=w, height=h)
+        self.lblCurrentTemperatureValue = gui.Label(str(G_current_temp), width=w, height=h)
         
         lblTargetTemperature = gui.Label('Target:', width=w, height=h)
-        self.lblTargetTemperatureValue = gui.Label('22.5 C', width=w, height=h)
+        self.lblTargetTemperatureValue = gui.Label(str(G_target_temp), width=w, height=h)
         
         #setup of the labels position
         lblRoomName.style['left'] = '5px'
@@ -177,8 +199,7 @@ class LCDApp(App):
         buttonsContainer.append(self.btRight)
         buttonsContainer.append(self.btLeft)
 
-        get_room_details()
-        
+        self.update()
         #here we start a timer
         Timer(1, self.update).start()
         
@@ -190,20 +211,33 @@ class LCDApp(App):
         global CURRENT
         global G_target_temp
         global sensor_list
+        global G_target_min
+        global G_target_max
         logging.debug("Raising target temp of curr sensor "+str(CURRENT))
         sensor = sensor_list[CURRENT]
         G_target_temp += decimal.Decimal('0.5')
+        G_target_max = G_target_temp+2
+        G_target_min = G_target_temp-2
         insert_sql("update current set target="+str(G_target_temp)+" where sensor = "+"'"+sensor[0]+"'")
+        insert_sql("update current set max_target="+str(G_target_max)+" where sensor = "+"'"+sensor[0]+"'")
+        insert_sql("update current set min_target="+str(G_target_min)+" where sensor = "+"'"+sensor[0]+"'")
         
     # listener function
     def on_click_down(self):
         global CURRENT
         global G_target_temp
         global sensor_list
+        global G_target_min
+        global G_target_max
         logging.debug("Dropping target temp of curr sensor "+str(CURRENT))
         sensor = sensor_list[CURRENT]
         G_target_temp -= decimal.Decimal('0.5')
+        G_target_max = G_target_temp+2
+        G_target_min = G_target_temp-2
         insert_sql("update current set target="+str(G_target_temp)+" where sensor = "+"'"+sensor[0]+"'")
+        insert_sql("update current set max_target="+str(G_target_max)+" where sensor = "+"'"+sensor[0]+"'")
+        insert_sql("update current set min_target="+str(G_target_min)+" where sensor = "+"'"+sensor[0]+"'")
+    
     
     # listener function
     def on_click_right(self):
@@ -214,7 +248,7 @@ class LCDApp(App):
         CURRENT += 1
         if (CURRENT>number_of_sensors):
             CURRENT = 0
-        
+
     # listener function
     def on_click_left(self):
         global CURRENT
@@ -224,6 +258,18 @@ class LCDApp(App):
         CURRENT -= 1
         if (CURRENT<0):
             CURRENT = number_of_sensors
+
+    def set_colour(self):
+        if G_current_temp < G_target_min:
+        #blue
+            self.lblCurrentTemperatureValue.style['color']='blue'
+        elif G_current_temp > G_target_max:
+        #red
+            self.lblCurrentTemperatureValue.style['color']='red'
+        elif (G_current_temp < G_target_max and G_current_temp > G_target_min):
+        #green
+            self.lblCurrentTemperatureValue.style['color']='green'
+        
        
     def update(self):
         #the code written here is executed each second
@@ -231,27 +277,24 @@ class LCDApp(App):
         global G_current_temp 
         global G_target_temp
         global G_display_temp
-        G_display_temp= G_target_temp
-        display_message=('Room:' + G_current_room +'\n'+ 'C:' +str("%.1f" % G_current_temp)+ '/T:'+str("%.1f" %G_target_temp))
-        lcd.message(display_message)
-        #get_colour()
+        get_room_details()
+        logging.debug("Room name "+str(G_current_room))
+        logging.debug("Room current "+str(G_current_temp))
+        logging.debug("Room target "+str(G_target_temp))
         self.lblRoomNameValue.set_text(G_current_room)
         self.lblCurrentTemperatureValue.set_text(str("%.1f" % G_current_temp))
         self.lblTargetTemperatureValue.set_text(str("%.1f" %G_target_temp))
+        self.imageRoom.attributes['src']='/res/'+G_current_room+'.jpg'
+        self.set_colour()
+
+        logging.debug("Finished running update.")    
         
-        if G_current_temp < G_target_temp:
-        #blue
-            self.lblCurrentTemperatureValue.style['color']='blue'
-        elif G_current_temp > G_target_temp:
-        #red
-            self.lblCurrentTemperatureValue.style['color']='red'
-        elif G_current_temp == G_target_temp:
-        #green
-            self.lblCurrentTemperatureValue.style['color']='green'
         Timer(1, self.update).start()
 
 if __name__ == "__main__":
+    sensor_list=get_current_sensors()
+    get_room_details()
     # starts the webserver
     # optional parameters
     # start(MyApp,address='127.0.0.1', port=8081, multiple_instance=False,enable_file_cache=True, update_interval=0.1, start_browser=True)
-    start(LCDApp, debug=True)
+    start(LCDApp, address='0.0.0.0', port=18081, websocket_port=18082, debug=True, host_name='vora.no-ip.com')
