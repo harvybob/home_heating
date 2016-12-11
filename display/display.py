@@ -24,12 +24,12 @@ import Adafruit_CharLCD as LCD
 lcd = LCD.Adafruit_CharLCDPlate()
 
 import logging
-logging.basicConfig(filename='/home/pi/heating_log/error_display.log', level=logging.INFO,
+logging.basicConfig(filename='../../heating_log/error_display.log', level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(name)s %(message)s')
 logger=logging.getLogger(__name__)
 
 Config = ConfigParser.ConfigParser()
-Config.read("./config_heating.ini")
+Config.read("../../config_heating.ini")
 Config.sections()
 
 def ConfigSectionMap(section):
@@ -129,8 +129,8 @@ def on_up_press():
     G_target_max = G_target_temp+('2')
     G_target_min = G_target_temp-('2')
     insert_sql("update current set target="+str(G_target_temp)+" where sensor = "+"'"+sensor[0]+"'")
-    insert_sql("update current set target_max="+str(G_target_max)+" where sensor = "+"'"+sensor[0]+"'")
-    insert_sql("update current set target_min="+str(G_target_min)+" where sensor = "+"'"+sensor[0]+"'")
+    insert_sql("update current set max_target="+str(G_target_max)+" where sensor = "+"'"+sensor[0]+"'")
+    insert_sql("update current set min_target="+str(G_target_min)+" where sensor = "+"'"+sensor[0]+"'")
 
     
 def on_down_press():
@@ -146,8 +146,8 @@ def on_down_press():
     G_target_max = G_target_temp+('2')
     G_target_min = G_target_temp-('2')
     insert_sql("update current set target="+str(G_target_temp)+" where sensor = "+"'"+sensor[0]+"'")
-    insert_sql("update current set target_max="+str(G_target_max)+" where sensor = "+"'"+sensor[0]+"'")
-    insert_sql("update current set target_min="+str(G_target_min)+" where sensor = "+"'"+sensor[0]+"'")
+    insert_sql("update current set max_target="+str(G_target_max)+" where sensor = "+"'"+sensor[0]+"'")
+    insert_sql("update current set min_target="+str(G_target_min)+" where sensor = "+"'"+sensor[0]+"'")
     
          
 def get_current_sensors():

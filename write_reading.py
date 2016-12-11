@@ -105,7 +105,7 @@ def get_current_sensors():
             my_sensors.append(file)
 
     for i in xrange(0,len(my_sensors)):
-        if (select_sql("select sensors from sensor_master where sensors = '"+(my_sensors[i])+"' and current = 1")):
+        if (select_sql("select sensors from sensor_master where sensors = '"+(my_sensors[i])+"' and current > 0")):
             my_current_sensors.append(my_sensors[i])
     
     return my_current_sensors
