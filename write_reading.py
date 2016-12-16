@@ -1,13 +1,13 @@
-#!/usr/bin/python
-#Followed this guide:
+# !/usr/bin/python
+# Followed this guide:
 # http://iot-projects.com/index.php?id=connect-ds18b20-sensors-to-raspberry-pi
 
-#1st Feb - inital write
-#3rd Feb - tidy up and add debug
-#4th Feb - Comments for help
-#29th Nov - Split to check what sensors are on this pi and if they are current then update.
-#29th nov 2016 removed os.system('modprobe w1-gpio and w1-therm') as they were throwing errors, but doesnt seem to be used.
-#1st dec 2016 - CHECK FOR NULL min/max
+# 1st Feb - inital write
+# 3rd Feb - tidy up and add debug
+# 4th Feb - Comments for help
+# 29th Nov - Split to check what sensors are on this pi and if they are current then update.
+# 29th nov 2016 removed os.system('modprobe w1-gpio and w1-therm') as they were throwing errors, but doesnt seem to be used.
+# 1st dec 2016 - CHECK FOR NULL min/max
 
 import time
 import os
@@ -15,13 +15,13 @@ import fnmatch
 import MySQLdb as mdb
 import ConfigParser
 import logging
-logging.basicConfig(filename='/home/pi/heating/heating_log/DS18B20_error.log', level=logging.DEBUG,
+logging.basicConfig(filename='/home/pi/heating/heating_log/DS18B20_error.log', level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(name)s %(message)s')
 logger=logging.getLogger(__name__)
 
 
-#os.system('modprobe w1-gpio')
-#os.system('modprobe w1-therm')
+# os.system('modprobe w1-gpio')
+# os.system('modprobe w1-therm')
 
 Main_sensor_list = []
 
@@ -53,33 +53,30 @@ def select_sql(command):
     """Will execute a select command onto the pi schema on 192.168.1.100 and return the value"""
     logging.debug("Running Select sql "+str(command))
     try:
-## host, userid, password, database instance 
+# host, userid, password, database instance 
       con = mdb.connect(serverip, username, userpass, schema);
       cursor = con.cursor()
-        
       sql = command
       cursor.execute(sql)
       return cursor.fetchall()
-           
       con.close()
 
     except mdb.Error, e:
       logger.error(e)
-      
-      
+
+
 def insert_sql(command):
     """Will execute an insert or delete command onto the pi schema on 192.168.1.100 and commit changes"""
     logging.debug("Running insert sql "+str(command))
     try:
-## host, userid, password, database instance
+# host, userid, password, database instance
       con = mdb.connect(serverip, username, userpass, schema);
       cursor = con.cursor()
-        
+
       sql = command
       cursor.execute(sql)
       sql = " commit;"
       cursor.execute(sql)
-           
       con.close()
 
     except mdb.Error, e:
@@ -88,16 +85,16 @@ def insert_sql(command):
 def clear_sensors():
     """Will clear all tables using the insert_sql procedure"""
     logging.debug("Clearing tables ")
-    #execute_sql("TRUNCATE TABLE current")
+    # execute_sql("TRUNCATE TABLE current")
     insert_sql("TRUNCATE TABLE heating_off")
     insert_sql("TRUNCATE TABLE heating_on")
     insert_sql("TRUNCATE TABLE hot_enough")
     insert_sql("TRUNCATE TABLE need_heat")
-    
+
 
 def get_current_sensors():
     """Will get a list of current sensors from the database"""
-    logging.debug("Get list of current sensors from sensor_master")      
+    logging.debug("Get list of current sensors from sensor_master")
     my_sensors = []
     my_current_sensors = []
     for file in os.listdir("/sys/bus/w1/devices"):
@@ -107,10 +104,9 @@ def get_current_sensors():
     for i in xrange(0,len(my_sensors)):
         if (select_sql("select sensors from sensor_master where sensors = '"+(my_sensors[i])+"' and current > 0")):
             my_current_sensors.append(my_sensors[i])
-    
+
     return my_current_sensors
-       
-    
+
 
 def get_reading(sensor):
     """Will get temprature reading of sensor"""
@@ -128,19 +124,19 @@ def get_reading(sensor):
             IDs.append(filename)
           else:
               logger.error("Error reading sensor with ID: %s" % (filename))
-  
+
     if (len(temperature)>0):
-        #insertDB(IDs, temperature)
+        # insertDB(IDs, temperature)
         return (IDs[0],time.strftime("%Y-%m-%d"), time.strftime("%H:%M"), temperature[0])
-    
+
 
 def update_value(sensor):
     """Will insert the current temprature of a sensor into database table"""
     logging.debug("Insert sensor details into temp_log " + str(sensor))
     values_to_insert= get_reading(sensor)
     
-    if (values_to_insert[3] < 7):
-        logging.INFO( "value too low for sensor: " + str(values_to_insert[0]) + ". value read is: " + str(values_to_insert[3]))
+    if (values_to_insert[3] < 4):
+        logging.info( "value too low for sensor: " + str(values_to_insert[0]) + ". value read is: " + str(values_to_insert[3]))
         values_to_insert= get_reading(sensor)
     # returns in format of sensor, date, time, value
     
@@ -157,13 +153,13 @@ def update_value(sensor):
 
 def main():
 
-    #clear_sensors()
-    Main_sensor_list=get_current_sensors()
-    
-    for i in range(0,len(Main_sensor_list)):
-        logging.debug("checking sensor: " + str(Main_sensor_list[i])) 
-        
+    # clear_sensors()
+    Main_sensor_list = get_current_sensors()
+
+    for i in range(0, len(Main_sensor_list)):
+        logging.debug("checking sensor: " + str(Main_sensor_list[i]))
+
         update_value(Main_sensor_list[i])
-                        
+
 if __name__ == "__main__":
     main()
