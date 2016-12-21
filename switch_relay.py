@@ -6,7 +6,7 @@ import MySQLdb as mdb
 import time
 import ConfigParser
 import logging
-logging.basicConfig(filename='./heating_log/error_heating.log', level=logging.INFO,
+logging.basicConfig(filename='./heating_log/error_relay.log', level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(name)s %(message)s')
 logger=logging.getLogger(__name__)
 
@@ -84,8 +84,7 @@ def move_sensor(move_sensor,table_from,table_to):
     insert_sql("INSERT INTO "+table_to+" (sensor) \
         VALUES ('%s')" % \
         (move_sensor))
-    insert_sql("DELETE FROM "+table_from+" WHERE sensor = '"+move_sensor+"'")
-                     
+    insert_sql("DELETE FROM "+table_from+" WHERE sensor = '"+move_sensor+"'")                    
 
 
 def switch_relay(sensor):
@@ -103,16 +102,16 @@ def switch_relay(sensor):
 def switch_heating():
     """Gets a list of current sensors from need_heating and moves them to heating_on or hot_enough  to off tables and switches relay"""
     logging.debug("Get list of current sensors from need_heating which need switching on")      
-    on_sensor_list=select_sql("select sensor from need_heat")
-    
+    # on_sensor_list=select_sql("select sensor from need_heat")
+    on_sensor_list=select_sql("select sensors from sensor_master where current_status = 0 and required_status = 1")
     for i in range(0,len(on_sensor_list)):
             for sensor in on_sensor_list[i]:
                 switch_relay(sensor)
                 move_sensor(sensor,"need_heat","heating_on")
 
     logging.debug("Get list of current sensors from hot_enough which need switching off")      
-    off_sensor_list=select_sql("select sensor from hot_enough")
-    
+    # off_sensor_list=select_sql("select sensor from hot_enough")
+    off_sensor_list=select_sql("select sensors from sensor_master where current_status = 1 and required_status = 0")
     for i in range(0,len(off_sensor_list)):
             for sensor in off_sensor_list[i]:
                 switch_relay(sensor)
