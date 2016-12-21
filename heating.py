@@ -18,7 +18,7 @@ import MySQLdb as mdb
 import ConfigParser
 import logging
 logging.basicConfig(filename='./heating_log/error_heating.log',
-                    level=logging.INFO,
+                    level=logging.DEBUG,
                     format='%(asctime)s %(levelname)s %(name)s %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -83,8 +83,9 @@ def insert_sql(command):
         logger.error(e)
 
 
-def move_sensor(move_sensor, table_from, table_to):
+def move_sensor(move_sensor, table_from, table_to, off):
     """Will move sensor value from one table to another"""
+    """ if value of off is true - turn heating off"""
     logging.debug(
         "move "+move_sensor+" from table "+table_from+" to "+table_to)
 
@@ -92,8 +93,11 @@ def move_sensor(move_sensor, table_from, table_to):
                VALUES('%s')" % \
                (move_sensor))
     insert_sql("DELETE FROM "+table_from+" WHERE sensor = '"+move_sensor+"'")
-
-
+    if off == "true":
+        insert_sql("UPDATE sensor_master set required_status = 0 where sensors = '"+move_sensor+"'")
+    else:
+        insert_sql("UPDATE sensor_master set required_status = 1 where sensors = '"+move_sensor+"'")
+        
 def check_heating():
     """Gets a list of current sensors from view_current_off/on
        and moves them to the need_heating or hot_enough tables"""
@@ -101,19 +105,19 @@ def check_heating():
     current_sensor_list = select_sql("select sensor from view_current_off where min_target > last_reading")
     for i in range(0, len(current_sensor_list)):
             for sensor in current_sensor_list[i]:
-                move_sensor(sensor, "heating_off", "need_heat")
+                move_sensor(sensor, "heating_off", "need_heat", "false")
 
     logging.debug("Get list of current sensors from view_current_on which are hot")
     current_sensor_list = select_sql("select sensor from view_current_on where max_target < last_reading")
     for i in range(0, len(current_sensor_list)):
             for sensor in current_sensor_list[i]:
-                move_sensor(sensor, "heating_on", "hot_enough")
+                move_sensor(sensor, "heating_on", "hot_enough", "true")
 
 
 def main():
-    while True:
-        check_heating()
+#    while True:
+    check_heating()
 
-        signal.signal(signal.SIGINT, handle_ctrl_c)
+    signal.signal(signal.SIGINT, handle_ctrl_c)
 if __name__ == "__main__":
     main()
