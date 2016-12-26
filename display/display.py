@@ -8,8 +8,8 @@
 #
 
 
-from notsmb import notSMB
-bus = notSMB(int('1'))
+#from notsmb import notSMB
+#bus = notSMB(int('1'))
 import sys
 import os
 import glob

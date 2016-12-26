@@ -19,12 +19,12 @@ import datetime
 import MySQLdb as mdb
 import ConfigParser
 import logging
-logging.basicConfig(filename='/home/pi/heating/heating_log/error_scheduler.log', level=logging.INFO,
+logging.basicConfig(filename='/home/pi/heating/heating_log/error_scheduler.log', level=logging.DEBUG,
                     format='%(asctime)s %(levelname)s %(name)s %(message)s')
 logger=logging.getLogger(__name__)
 
 Config = ConfigParser.ConfigParser()
-Config.read("././config_heating.ini")
+Config.read("../config_heating.ini")
 Config.sections()
 
 def ConfigSectionMap(section):
@@ -164,7 +164,8 @@ def is_holiday_mode():
     holiday_date = "DD/MM/YYYY"
     holiday_time = "00:00"
 	
-    holiday_mode=select_sql("SELECT * FROM holiday_mode")	
+    holiday_mode=select_sql("SELECT * FROM holiday_mode where holiday_mode=1")	
+    print len(holiday_mode)
     if holiday_mode[0][0] == 1:
         G_holiday_mode = "Y"
         holiday_date=holiday_mode[0][1]
@@ -207,8 +208,8 @@ def main():
     while True:
         for i in range(0,len(Main_sensor_list)): 
             get_now();
-           # is_holiday_mode()
-           # holiday_mode_off()
+            #is_holiday_mode()
+            #holiday_mode_off()
            
            #MOVE THIS TO OWN METHOD
             logging.debug("")

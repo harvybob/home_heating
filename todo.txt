@@ -9,12 +9,12 @@ telegrapm bot:
 
 
 main heating:
-update heating to pull relay switching out - heating puts sensors in table, relay moves to on off
-adjust to account for min/max
+update heating to pull relay switching out - heating puts sensors in table, relay moves to on off (done and tested 2/12/16)
+adjust to account for min/max (recheck code but done and tested 2/12/16)
 add overrun? floor will continue to heat while off!
 
 Get readings:
-add table for non room heating - sensors for floor, pipes etc
+DONE - add table for non room heating - sensors for floor, pipes etc current =2
 
 
 FailSafe:
@@ -35,3 +35,5 @@ Adjust to check if sensor is on/off at present
 test script runs
 
 
+MISC
+Adjust kitchen to be lower flow
