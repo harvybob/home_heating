@@ -24,7 +24,7 @@ import Adafruit_CharLCD as LCD
 lcd = LCD.Adafruit_CharLCDPlate()
 
 import logging
-logging.basicConfig(filename='../heating_log/error_display.log', level=logging.DEBUG,
+logging.basicConfig(filename='../heating_log/error_display.log', level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(name)s %(message)s')
 logger=logging.getLogger(__name__)
 
