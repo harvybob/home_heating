@@ -24,12 +24,12 @@ import Adafruit_CharLCD as LCD
 lcd = LCD.Adafruit_CharLCDPlate()
 
 import logging
-logging.basicConfig(filename='../../heating_log/error_display.log', level=logging.INFO,
+logging.basicConfig(filename='../heating_log/error_display.log', level=logging.DEBUG,
                     format='%(asctime)s %(levelname)s %(name)s %(message)s')
 logger=logging.getLogger(__name__)
 
 Config = ConfigParser.ConfigParser()
-Config.read("../../config_heating.ini")
+Config.read("../config_heating.ini")
 Config.sections()
 
 def ConfigSectionMap(section):
@@ -126,8 +126,8 @@ def on_up_press():
     logging.debug("Raising target temp of curr sensor "+str(CURRENT))
     sensor = sensor_list[CURRENT]
     G_target_temp += decimal.Decimal('0.5')
-    G_target_max = G_target_temp+('2')
-    G_target_min = G_target_temp-('2')
+    G_target_max = G_target_temp+2
+    G_target_min = G_target_temp-2
     insert_sql("update current set target="+str(G_target_temp)+" where sensor = "+"'"+sensor[0]+"'")
     insert_sql("update current set max_target="+str(G_target_max)+" where sensor = "+"'"+sensor[0]+"'")
     insert_sql("update current set min_target="+str(G_target_min)+" where sensor = "+"'"+sensor[0]+"'")
@@ -143,8 +143,8 @@ def on_down_press():
     logging.debug("Dropping target temp of curr sensor "+str(CURRENT))
     sensor = sensor_list[CURRENT]
     G_target_temp -= decimal.Decimal('0.5')
-    G_target_max = G_target_temp+('2')
-    G_target_min = G_target_temp-('2')
+    G_target_max = G_target_temp+2
+    G_target_min = G_target_temp-2
     insert_sql("update current set target="+str(G_target_temp)+" where sensor = "+"'"+sensor[0]+"'")
     insert_sql("update current set max_target="+str(G_target_max)+" where sensor = "+"'"+sensor[0]+"'")
     insert_sql("update current set min_target="+str(G_target_min)+" where sensor = "+"'"+sensor[0]+"'")
@@ -162,7 +162,7 @@ def get_room_details():
     global G_target_min
     global G_target_max
     global sensor_list
-    current_room_temp= select_sql("SELECT room,last_reading,target,target_max,target_min FROM view_display WHERE sensor = '{0}'".format(sensor_list[CURRENT][0]))
+    current_room_temp= select_sql("SELECT room,last_reading,target,max_target,min_target FROM view_display WHERE sensor = '{0}'".format(sensor_list[CURRENT][0]))
     G_current_room= current_room_temp[0][0]
     G_current_temp= current_room_temp[0][1]
     G_target_temp = current_room_temp[0][2]
@@ -194,7 +194,7 @@ def get_colour():
     elif G_current_temp > G_target_max:
     #red
         lcd.set_color(1.0, 0.0, 0.0)
-    elif G_target_max > G_current_temp < G_target_min:
+    elif (G_current_temp < G_target_max and G_current_temp > G_target_min):
     #green
         lcd.set_color(0.0, 1.0, 0.0)
     
