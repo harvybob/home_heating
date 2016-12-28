@@ -79,7 +79,12 @@ def insert_sql(command):
 
 def move_sensor(move_sensor, table_from, table_to, off):
     """Will move sensor value from one table to another"""
-    """ if value of off is true - turn heating off"""
+    """ sensor to move, table to move from, table to move to, and expected new status"""
+    # status: 0 is heating off
+    # status: 1 is needs heat
+    # status: 2 is heating on
+    # status: 3 is turing off
+    # status: -1 is an error occured 
     logging.debug(
         "move "+move_sensor+" from table "+table_from+" to "+table_to)
 
