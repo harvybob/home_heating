@@ -93,10 +93,12 @@ def move_sensor(move_sensor, table_from, table_to, off):
                VALUES('%s')" % \
                (move_sensor))
     insert_sql("DELETE FROM "+table_from+" WHERE sensor = '"+move_sensor+"'")
-    if off == "true":
-        insert_sql("UPDATE sensor_master set required_status = 0 where sensors = '"+move_sensor+"'")
-    else:
+    if off == "turn_off":
+        insert_sql("UPDATE sensor_master set required_status = 3 where sensors = '"+move_sensor+"'")
+    elif off == "need":
         insert_sql("UPDATE sensor_master set required_status = 1 where sensors = '"+move_sensor+"'")
+    else:
+        insert_sql("UPDATE sensor_master set required_status = -1 where sensors = '"+move_sensor+"'")
         
 def check_heating():
     """Gets a list of current sensors from view_current_off/on
@@ -105,13 +107,13 @@ def check_heating():
     current_sensor_list = select_sql("select sensor from view_current_off where min_target > last_reading")
     for i in range(0, len(current_sensor_list)):
             for sensor in current_sensor_list[i]:
-                move_sensor(sensor, "heating_off", "need_heat", "false")
+                move_sensor(sensor, "heating_off", "need_heat", "need")
 
     logging.debug("Get list of current sensors from view_current_on which are hot")
     current_sensor_list = select_sql("select sensor from view_current_on where max_target < last_reading")
     for i in range(0, len(current_sensor_list)):
             for sensor in current_sensor_list[i]:
-                move_sensor(sensor, "heating_on", "hot_enough", "true")
+                move_sensor(sensor, "heating_on", "hot_enough", "turn_off")
 
 
 def main():

@@ -77,14 +77,22 @@ def insert_sql(command):
     except mdb.Error, e:
       logger.error(e)
 
-def move_sensor(move_sensor,table_from,table_to):
+def move_sensor(move_sensor, table_from, table_to, off):
     """Will move sensor value from one table to another"""
-    logging.debug("move "+move_sensor+" from table "+table_from+" to "+table_to)
+    """ if value of off is true - turn heating off"""
+    logging.debug(
+        "move "+move_sensor+" from table "+table_from+" to "+table_to)
 
-    insert_sql("INSERT INTO "+table_to+" (sensor) \
-        VALUES ('%s')" % \
-        (move_sensor))
-    insert_sql("DELETE FROM "+table_from+" WHERE sensor = '"+move_sensor+"'")                    
+    insert_sql("INSERT INTO " + table_to + " (sensor) \
+               VALUES('%s')" % \
+               (move_sensor))
+    insert_sql("DELETE FROM "+table_from+" WHERE sensor = '"+move_sensor+"'")
+    if off == "turned_on":
+        insert_sql("UPDATE sensor_master set required_status = 2 where sensors = '"+move_sensor+"'")
+    elif off == "turned_off":
+        insert_sql("UPDATE sensor_master set required_status = 0 where sensors = '"+move_sensor+"'")
+    else:
+        insert_sql("UPDATE sensor_master set required_status = -1 where sensors = '"+move_sensor+"'")                
 
 
 def switch_relay(sensor):
@@ -107,7 +115,7 @@ def switch_heating():
     for i in range(0,len(on_sensor_list)):
             for sensor in on_sensor_list[i]:
                 switch_relay(sensor)
-                move_sensor(sensor,"need_heat","heating_on")
+                move_sensor(sensor,"need_heat","heating_on","turned_on")
 
     logging.debug("Get list of current sensors from hot_enough which need switching off")      
     # off_sensor_list=select_sql("select sensor from hot_enough")
@@ -115,7 +123,7 @@ def switch_heating():
     for i in range(0,len(off_sensor_list)):
             for sensor in off_sensor_list[i]:
                 switch_relay(sensor)
-                move_sensor(sensor,"hot_enough","heating_off")
+                move_sensor(sensor,"hot_enough","heating_off","turned_off")
 
 
 def main():
