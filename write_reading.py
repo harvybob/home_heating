@@ -115,6 +115,7 @@ def get_reading(sensor):
     IDs = []
   
     for filename in os.listdir("/sys/bus/w1/devices"):
+      time.sleep(0.3)
       if fnmatch.fnmatch(filename, sensor):
         with open("/sys/bus/w1/devices/" + filename + "/w1_slave") as fileobj:
           lines = fileobj.readlines()
@@ -134,10 +135,11 @@ def update_value(sensor):
     """Will insert the current temprature of a sensor into database table"""
     logging.debug("Insert sensor details into temp_log " + str(sensor))
     values_to_insert= get_reading(sensor)
-    
-    if (values_to_insert[3] < 4):
-        logging.info( "value too low for sensor: " + str(values_to_insert[0]) + ". value read is: " + str(values_to_insert[3]))
-        values_to_insert= get_reading(sensor)
+    count = 0 
+    while (values_to_insert[3] < 4) and (count < 10) :
+        logging.info( "value too low for sensor: " + str(values_to_insert[0]) + ". value read is: " + str(values_to_insert[3]) + " and count is " + str(count))
+        values_to_insert= get_reading(sensor)   
+        count+=1
     # returns in format of sensor, date, time, value
     
     insert_sql("INSERT INTO temp_log(sensor_id, date, time, value) \

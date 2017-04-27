@@ -19,7 +19,7 @@ import datetime
 import MySQLdb as mdb
 import ConfigParser
 import logging
-logging.basicConfig(filename='/home/pi/heating/heating_log/error_scheduler.log', level=logging.DEBUG,
+logging.basicConfig(filename='../heating_log/error_scheduler.log', level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(name)s %(message)s')
 logger=logging.getLogger(__name__)
 
@@ -186,11 +186,15 @@ def check_set_new_temp(sensor):
     logging.debug("if value is None, then no result was returned from db")
     logging.debug("")
     G_current_target_temp=get_sensor_current_target()
+    target_max = G_schedule_target_temp+1
+    target_min = G_schedule_target_temp-1
     logging.debug("Current value of G_current_target_temp is: "+ str(G_current_target_temp))
     if (G_schedule_target_temp is not None) :
        # if nothing found in select then type is returned as none, ie no value at all
        # if a value is found then updates as required
         insert_sql("update current set target="+str(G_schedule_target_temp)+" where sensor = "+"'"+G_current_sensor+"'")
+        insert_sql("update current set max_target="+str(target_max)+" where sensor = "+"'"+G_current_sensor+"'")
+        insert_sql("update current set min_target="+str(target_min)+" where sensor = "+"'"+G_current_sensor+"'")
         G_current_target_temp=get_sensor_current_target()   
 	
 def main():
@@ -229,8 +233,12 @@ def main():
             if (G_schedule_target_temp is not None) :
            # if nothing found in select then type is returned as none, ie no value at all
            # if a value is found then updates as required
-       
+                logging.info("I am running this section")
+                target_max = G_schedule_target_temp+1
+                target_min = G_schedule_target_temp-1
                 insert_sql("update current set target="+str(G_schedule_target_temp)+" where sensor = "+"'"+G_current_sensor+"'")
+                insert_sql("update current set max_target="+str(target_max)+" where sensor = "+"'"+G_current_sensor+"'")
+                insert_sql("update current set min_target="+str(target_min)+" where sensor = "+"'"+G_current_sensor+"'")
                 G_current_target_temp=get_sensor_current_target()
            #ALL THE WAY TO HERE     
 

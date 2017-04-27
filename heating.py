@@ -18,7 +18,7 @@ import MySQLdb as mdb
 import ConfigParser
 import logging
 logging.basicConfig(filename='./heating_log/error_heating.log',
-                    level=logging.DEBUG,
+                    level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(name)s %(message)s')
 logger = logging.getLogger(__name__)
 

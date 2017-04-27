@@ -6,7 +6,7 @@ import MySQLdb as mdb
 import time
 import ConfigParser
 import logging
-logging.basicConfig(filename='./heating_log/error_heating.log', level=logging.INFO,
+logging.basicConfig(filename='./heating_log/error_switch_relay.log', level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(name)s %(message)s')
 logger=logging.getLogger(__name__)
 
@@ -77,14 +77,27 @@ def insert_sql(command):
     except mdb.Error, e:
       logger.error(e)
 
-def move_sensor(move_sensor,table_from,table_to):
+def move_sensor(move_sensor, table_from, table_to, off):
     """Will move sensor value from one table to another"""
-    logging.debug("move "+move_sensor+" from table "+table_from+" to "+table_to)
+    """ sensor to move, table to move from, table to move to, and expected new status"""
+    # status: 0 is heating off
+    # status: 1 is needs heat
+    # status: 2 is heating on
+    # status: 3 is turing off
+    # status: -1 is an error occured 
+    logging.debug(
+        "move "+move_sensor+" from table "+table_from+" to "+table_to)
 
-    insert_sql("INSERT INTO "+table_to+" (sensor) \
-        VALUES ('%s')" % \
-        (move_sensor))
+    insert_sql("INSERT INTO " + table_to + " (sensor) \
+               VALUES('%s')" % \
+               (move_sensor))
     insert_sql("DELETE FROM "+table_from+" WHERE sensor = '"+move_sensor+"'")
+    if off == "turned_on":
+        insert_sql("UPDATE sensor_master set required_status = 2 where sensors = '"+move_sensor+"'")
+    elif off == "turned_off":
+        insert_sql("UPDATE sensor_master set required_status = 0 where sensors = '"+move_sensor+"'")
+    else:
+        insert_sql("UPDATE sensor_master set required_status = -1 where sensors = '"+move_sensor+"'") 
                      
 
 

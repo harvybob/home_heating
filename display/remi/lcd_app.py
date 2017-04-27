@@ -216,8 +216,8 @@ class LCDApp(App):
         logging.debug("Raising target temp of curr sensor "+str(CURRENT))
         sensor = sensor_list[CURRENT]
         G_target_temp += decimal.Decimal('0.5')
-        G_target_max = G_target_temp+2
-        G_target_min = G_target_temp-2
+        G_target_max = G_target_temp+1
+        G_target_min = G_target_temp-1
         insert_sql("update current set target="+str(G_target_temp)+" where sensor = "+"'"+sensor[0]+"'")
         insert_sql("update current set max_target="+str(G_target_max)+" where sensor = "+"'"+sensor[0]+"'")
         insert_sql("update current set min_target="+str(G_target_min)+" where sensor = "+"'"+sensor[0]+"'")
@@ -232,8 +232,8 @@ class LCDApp(App):
         logging.debug("Dropping target temp of curr sensor "+str(CURRENT))
         sensor = sensor_list[CURRENT]
         G_target_temp -= decimal.Decimal('0.5')
-        G_target_max = G_target_temp+2
-        G_target_min = G_target_temp-2
+        G_target_max = G_target_temp+1
+        G_target_min = G_target_temp-1
         insert_sql("update current set target="+str(G_target_temp)+" where sensor = "+"'"+sensor[0]+"'")
         insert_sql("update current set max_target="+str(G_target_max)+" where sensor = "+"'"+sensor[0]+"'")
         insert_sql("update current set min_target="+str(G_target_min)+" where sensor = "+"'"+sensor[0]+"'")
