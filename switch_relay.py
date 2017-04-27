@@ -1,7 +1,6 @@
 import sys
 import signal
 import i2c_raw
-bv4627 = i2c_raw.i2c(0x32, 1) # device 0x32, bus 1
 import MySQLdb as mdb
 import time
 import ConfigParser
@@ -77,7 +76,7 @@ def insert_sql(command):
     except mdb.Error, e:
       logger.error(e)
 
-def move_sensor(move_sensor, table_from, table_to, off):
+def new_move_sensor(move_sensor, table_from, table_to, off):
     """Will move sensor value from one table to another"""
     """ sensor to move, table to move from, table to move to, and expected new status"""
     # status: 0 is heating off
@@ -98,22 +97,32 @@ def move_sensor(move_sensor, table_from, table_to, off):
         insert_sql("UPDATE sensor_master set required_status = 0 where sensors = '"+move_sensor+"'")
     else:
         insert_sql("UPDATE sensor_master set required_status = -1 where sensors = '"+move_sensor+"'") 
-                     
+
+def move_sensor(move_sensor,table_from,table_to):
+    """Will move sensor value from one table to another"""
+    logging.debug("move "+move_sensor+" from table "+table_from+" to "+table_to)
+
+    insert_sql("INSERT INTO "+table_to+" (sensor) \
+        VALUES ('%s')" % \
+        (move_sensor))
+    insert_sql("DELETE FROM "+table_from+" WHERE sensor = '"+move_sensor+"'")                     
 
 
 def switch_relay(sensor):
     """Will look up relay number for a sensor and switch it"""
-    relay_results=select_sql("SELECT relay FROM sensor_master WHERE sensors = '{0}'".format(sensor))
+    relay_results=select_sql("SELECT relay,board FROM sensor_master WHERE sensors = '{0}'".format(sensor))
     for relay in relay_results:
         relay_no=int(relay[0])
-        logging.info("switching on relay "+str(relay_no))
+        relay_board=int(relay[1])
+        bv4627 = i2c_raw.i2c(relay_board, 1)
+        logging.info("switching on relay "+str(relay_no)+" on board "+str(relay_board))
         bv4627.write(bytearray([relay_no,1,0,1]))
         time.sleep(.4)
-        logging.info("switching off relay "+str(relay_no))
+        logging.info("switching off relay "+str(relay_no)+" on board "+str(relay_board))
         bv4627.write(bytearray([relay_no,0,0,1]))
 
 
-def switch_heating():
+def new_switch_heating():
     """Gets a list of current sensors from need_heating and moves them to heating_on or hot_enough  to off tables and switches relay"""
     logging.debug("Get list of current sensors from need_heating which need switching on")      
     on_sensor_list=select_sql("select sensor from need_heat")
@@ -131,10 +140,28 @@ def switch_heating():
                 switch_relay(sensor)
                 move_sensor(sensor,"hot_enough","heating_off")
 
+def switch_heating():
+    """Gets a list of current sensors from need_heating and moves them to heating_on or hot_enough  to off tables and switches relay"""
+    logging.debug("Get list of current sensors from need_heating which need switching on")      
+    on_sensor_list=select_sql("select sensor from need_heat")
+    
+    for i in range(0,len(on_sensor_list)):
+            for sensor in on_sensor_list[i]:
+                switch_relay(sensor)
+                move_sensor(sensor,"need_heat","heating_on")
+
+    logging.debug("Get list of current sensors from hot_enough which need switching off")      
+    off_sensor_list=select_sql("select sensor from hot_enough")
+    
+    for i in range(0,len(off_sensor_list)):
+            for sensor in off_sensor_list[i]:
+                switch_relay(sensor)
+                move_sensor(sensor,"hot_enough","heating_off")
 
 def main():
     while True:
-        switch_heating()
+       # switch_heating()
+        switch_relay('28-00000595cc2a')
         signal.signal(signal.SIGINT, handle_ctrl_c)    
 if __name__ == "__main__":
     main()
