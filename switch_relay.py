@@ -160,8 +160,7 @@ def switch_heating():
 
 def main():
     while True:
-       # switch_heating()
-        switch_relay('28-00000595cc2a')
+        switch_heating()
         signal.signal(signal.SIGINT, handle_ctrl_c)    
 if __name__ == "__main__":
     main()
