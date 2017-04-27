@@ -31,8 +31,10 @@ adjust schedule script to move main swap to own method.
 
 
 Relays:
+Adjust to have multiple boards on one pi, and know which board to pulse (done 27/4/17)
 Adjust to check if sensor is on/off at present
-test script runs
+Update current state based on request
+check current state vs expected
 
 
 MISC
