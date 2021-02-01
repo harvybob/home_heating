@@ -216,8 +216,8 @@ class LCDApp(App):
         logging.debug("Raising target temp of curr sensor "+str(CURRENT))
         sensor = sensor_list[CURRENT]
         G_target_temp += decimal.Decimal('0.5')
-        G_target_max = G_target_temp+1
-        G_target_min = G_target_temp-1
+        G_target_max = G_target_temp+decimal.Decimal('0.5')
+        G_target_min = G_target_temp-decimal.Decimal('0.5')
         insert_sql("update current set target="+str(G_target_temp)+" where sensor = "+"'"+sensor[0]+"'")
         insert_sql("update current set max_target="+str(G_target_max)+" where sensor = "+"'"+sensor[0]+"'")
         insert_sql("update current set min_target="+str(G_target_min)+" where sensor = "+"'"+sensor[0]+"'")
@@ -232,8 +232,8 @@ class LCDApp(App):
         logging.debug("Dropping target temp of curr sensor "+str(CURRENT))
         sensor = sensor_list[CURRENT]
         G_target_temp -= decimal.Decimal('0.5')
-        G_target_max = G_target_temp+1
-        G_target_min = G_target_temp-1
+        G_target_max = G_target_temp+decimal.Decimal('0.5')
+        G_target_min = G_target_temp-decimal.Decimal('0.5')
         insert_sql("update current set target="+str(G_target_temp)+" where sensor = "+"'"+sensor[0]+"'")
         insert_sql("update current set max_target="+str(G_target_max)+" where sensor = "+"'"+sensor[0]+"'")
         insert_sql("update current set min_target="+str(G_target_min)+" where sensor = "+"'"+sensor[0]+"'")
@@ -297,4 +297,4 @@ if __name__ == "__main__":
     # starts the webserver
     # optional parameters
     # start(MyApp,address='127.0.0.1', port=8081, multiple_instance=False,enable_file_cache=True, update_interval=0.1, start_browser=True)
-    start(LCDApp, address='0.0.0.0', port=18081, websocket_port=18082, debug=True, host_name='vora.no-ip.com')
+    start(LCDApp, address='0.0.0.0', port=18081, websocket_port=18082, debug=True)
