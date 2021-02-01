@@ -18,6 +18,7 @@ import time
 import datetime
 import MySQLdb as mdb
 import ConfigParser
+import decimal 
 import logging
 logging.basicConfig(filename='../heating_log/error_scheduler.log', level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(name)s %(message)s')
@@ -53,6 +54,7 @@ G_current_time = "00:00:00"
 G_current_sensor=""
 G_current_target_temp= 0.000
 G_schedule_target_temp= 0.000
+G_inc= decimal.Decimal('0.5')
 G_holiday_date = "DD/MM/YYYY"
 G_holiday_time = "00:00:00"
 G_holiday_mode = "Y"
@@ -186,8 +188,8 @@ def check_set_new_temp(sensor):
     logging.debug("if value is None, then no result was returned from db")
     logging.debug("")
     G_current_target_temp=get_sensor_current_target()
-    target_max = G_schedule_target_temp+1
-    target_min = G_schedule_target_temp-1
+    target_max = G_schedule_target_temp+G_inc
+    target_min = G_schedule_target_temp-G_inc
     logging.debug("Current value of G_current_target_temp is: "+ str(G_current_target_temp))
     if (G_schedule_target_temp is not None) :
        # if nothing found in select then type is returned as none, ie no value at all
@@ -234,8 +236,8 @@ def main():
            # if nothing found in select then type is returned as none, ie no value at all
            # if a value is found then updates as required
                 logging.info("I am running this section")
-                target_max = G_schedule_target_temp+1
-                target_min = G_schedule_target_temp-1
+                target_max = G_schedule_target_temp+G_inc
+                target_min = G_schedule_target_temp-G_inc
                 insert_sql("update current set target="+str(G_schedule_target_temp)+" where sensor = "+"'"+G_current_sensor+"'")
                 insert_sql("update current set max_target="+str(target_max)+" where sensor = "+"'"+G_current_sensor+"'")
                 insert_sql("update current set min_target="+str(target_min)+" where sensor = "+"'"+G_current_sensor+"'")
